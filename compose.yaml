@@ -50,5 +50,6 @@ services:
     volumes:
       - /volume2/photos_immich/upload:/usr/src/app/upload
       - /volume1/docker/immich/cache:/cache
+      - /volume2/MYFiles/Photos/MobileBackup:/external/mobile-backup:ro
     ports:
       - "2283:2283"
