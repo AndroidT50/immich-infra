@@ -1,0 +1,54 @@
+version: "3.8"
+
+services:
+  immich_postgres:
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+    container_name: immich_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: immich
+      POSTGRES_PASSWORD: immich
+      POSTGRES_DB: immich
+    volumes:
+      - /volume1/docker/immich/postgres:/var/lib/postgresql/data
+
+  immich_redis:
+    image: redis:7
+    container_name: immich_redis
+    restart: unless-stopped
+    command: redis-server --save "" --appendonly no
+
+  immich_machine_learning:
+    image: ghcr.io/immich-app/immich-machine-learning:v2.4.1
+    container_name: immich_machine_learning
+    restart: unless-stopped
+    environment:
+      DB_HOSTNAME: immich_postgres
+      DB_USERNAME: immich
+      DB_PASSWORD: immich
+      DB_DATABASE_NAME: immich
+      REDIS_HOSTNAME: immich_redis
+    volumes:
+      - /volume1/docker/immich/ml:/cache
+
+  immich_server:
+    image: ghcr.io/immich-app/immich-server:v2.4.1
+    container_name: immich_server
+    restart: unless-stopped
+    depends_on:
+      - immich_postgres
+      - immich_redis
+      - immich_machine_learning
+    environment:
+      DB_HOSTNAME: immich_postgres
+      DB_USERNAME: immich
+      DB_PASSWORD: immich
+      DB_DATABASE_NAME: immich
+      REDIS_HOSTNAME: immich_redis
+      IMMICH_API_HOST: 0.0.0.0
+      IMMICH_API_PORT: 2283
+    volumes:
+      - /volume2/photos_immich/upload:/usr/src/app/upload
+      - /volume1/docker/immich/cache:/cache
+    ports:
+      - "2283:2283"
